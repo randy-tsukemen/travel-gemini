@@ -25,46 +25,46 @@ interface TravelItem {
 const initialTravelItems: TravelItem[] = [
   {
     id: "item1",
-    title: "Flight to Paris",
+    title: "Visit Shibuya Crossing",
     date: "June 1, 2024",
-    description: "Departing from JFK Airport to Charles de Gaulle Airport",
-    icon: "plane",
-    location: { lat: 48.8566, lng: 2.3522 },
+    description: "Experience the famous Shibuya Crossing",
+    icon: "mapPin",
+    location: { lat: 35.6595, lng: 139.7005 }, // Shibuya Crossing coordinates
   },
   {
     id: "item2",
-    title: "Train to Lyon",
-    date: "June 3, 2024",
-    description: "Taking the TGV from Paris to Lyon",
-    icon: "train",
-    location: { lat: 45.764, lng: 4.8357 },
+    title: "Tour Tokyo Tower",
+    date: "June 2, 2024",
+    description: "Visit the iconic Tokyo Tower",
+    icon: "mapPin",
+    location: { lat: 35.6586, lng: 139.7454 }, // Tokyo Tower coordinates
   },
 ];
 
 const initialAvailablePlaces: TravelItem[] = [
   {
     id: "place1",
-    title: "Drive to Marseille",
+    title: "Explore Asakusa",
     date: "TBD",
-    description: "Rent a car and drive from Lyon to Marseille",
-    icon: "car",
-    location: { lat: 43.2965, lng: 5.3698 },
+    description: "Visit the historic Asakusa district",
+    icon: "mapPin",
+    location: { lat: 35.7148, lng: 139.7967 }, // Asakusa coordinates
   },
   {
     id: "place2",
-    title: "Cruise to Naples",
+    title: "Walk around Ueno Park",
     date: "TBD",
-    description: "Board a cruise ship from Marseille to Naples",
-    icon: "ship",
-    location: { lat: 40.8518, lng: 14.2681 },
+    description: "Enjoy a stroll in Ueno Park",
+    icon: "mapPin",
+    location: { lat: 35.717, lng: 139.7745 }, // Ueno Park coordinates
   },
   {
     id: "place3",
-    title: "Visit Rome",
+    title: "Shop in Ginza",
     date: "TBD",
-    description: "Take a train from Naples to Rome",
-    icon: "train",
-    location: { lat: 41.9028, lng: 12.4964 },
+    description: "Experience shopping in Ginza",
+    icon: "mapPin",
+    location: { lat: 35.6717, lng: 139.764 }, // Ginza coordinates
   },
 ];
 
@@ -310,8 +310,8 @@ export default function TravelItineraryPlanner() {
                 </Autocomplete>
                 <GoogleMap
                   mapContainerStyle={{ width: "100%", height: "100%" }}
-                  center={travelItems[0].location}
-                  zoom={5}
+                  center={travelItems[0].location} // This will now be Shibuya Crossing
+                  zoom={12}
                   onLoad={onLoad}
                 >
                   {directions && (
