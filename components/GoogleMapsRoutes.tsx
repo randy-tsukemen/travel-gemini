@@ -1,20 +1,24 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plane, Train, Car, Ship, MapPin } from "lucide-react";
+import { Plane, Train, Car, Ship, MapPin, Plus } from "lucide-react";
 import {
   GoogleMap,
   useJsApiLoader,
   DirectionsRenderer,
+  Autocomplete,
 } from "@react-google-maps/api";
+
+// You need to replace this with your actual Google Maps API key
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 interface TravelItem {
   id: string;
   title: string;
   date: string;
   description: string;
-  icon: "plane" | "train" | "car" | "ship";
+  icon: "plane" | "train" | "car" | "ship" | "mapPin";
   location: { lat: number; lng: number };
 }
 
@@ -37,7 +41,7 @@ const initialTravelItems: TravelItem[] = [
   },
 ];
 
-const availablePlaces: TravelItem[] = [
+const initialAvailablePlaces: TravelItem[] = [
   {
     id: "place1",
     title: "Drive to Marseille",
@@ -86,12 +90,15 @@ const getIcon = (iconName: string) => {
 
 export default function TravelItineraryPlanner() {
   const [travelItems, setTravelItems] = useState(initialTravelItems);
-  const [places, setPlaces] = useState(availablePlaces);
+  const [places, setPlaces] = useState(initialAvailablePlaces);
   const [directions, setDirections] = useState(null);
+  const [searchResult, setSearchResult] = useState(null);
+  const autocompleteRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
   });
 
   const onLoad = useCallback(
@@ -131,6 +138,27 @@ export default function TravelItineraryPlanner() {
       );
     }
   }, [isLoaded, travelItems]);
+
+  const onPlaceChanged = () => {
+    if (autocompleteRef.current !== null) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const newPlace: TravelItem = {
+          id: `place${places.length + 1}`,
+          title: place.name,
+          date: "TBD",
+          description: place.formatted_address || "",
+          icon: "mapPin",
+          location: {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          },
+        };
+        setPlaces([...places, newPlace]);
+        setSearchResult(null);
+      }
+    }
+  };
 
   const onDragEnd = (result: any) => {
     const { source, destination } = result;
@@ -265,37 +293,51 @@ export default function TravelItineraryPlanner() {
               </div>
             )}
           </Droppable>
-          <div className="w-full lg:w-1/4 h-[600px]">
+          <div className="w-full lg:w-1/4 h-[600px] flex flex-col">
             {isLoaded ? (
-              <GoogleMap
-                mapContainerStyle={{ width: "100%", height: "100%" }}
-                center={travelItems[0].location}
-                zoom={5}
-                onLoad={onLoad}
-              >
-                {directions && (
-                  <DirectionsRenderer
-                    directions={directions}
-                    options={{
-                      polylineOptions: {
-                        strokeColor: "#FF0000",
-                        strokeOpacity: 0.8,
-                        strokeWeight: 3,
-                      },
-                      markerOptions: {
-                        icon: {
-                          path: window.google.maps.SymbolPath.CIRCLE,
-                          scale: 7,
-                          fillColor: "#FF0000",
-                          fillOpacity: 1,
-                          strokeWeight: 2,
-                          strokeColor: "#FFFFFF",
-                        },
-                      },
-                    }}
+              <>
+                <Autocomplete
+                  onLoad={(autocomplete) => {
+                    autocompleteRef.current = autocomplete;
+                  }}
+                  onPlaceChanged={onPlaceChanged}
+                >
+                  <input
+                    type="text"
+                    placeholder="Search for a place"
+                    className="w-full p-2 mb-4 border border-gray-300 rounded"
                   />
-                )}
-              </GoogleMap>
+                </Autocomplete>
+                <GoogleMap
+                  mapContainerStyle={{ width: "100%", height: "100%" }}
+                  center={travelItems[0].location}
+                  zoom={5}
+                  onLoad={onLoad}
+                >
+                  {directions && (
+                    <DirectionsRenderer
+                      directions={directions}
+                      options={{
+                        polylineOptions: {
+                          strokeColor: "#FF0000",
+                          strokeOpacity: 0.8,
+                          strokeWeight: 3,
+                        },
+                        markerOptions: {
+                          icon: {
+                            path: window.google.maps.SymbolPath.CIRCLE,
+                            scale: 7,
+                            fillColor: "#FF0000",
+                            fillOpacity: 1,
+                            strokeWeight: 2,
+                            strokeColor: "#FFFFFF",
+                          },
+                        },
+                      }}
+                    />
+                  )}
+                </GoogleMap>
+              </>
             ) : (
               <div>Loading...</div>
             )}
