@@ -1,5 +1,9 @@
-import Image from "next/image";
+import GoogleMapsRoutes from "@/components/GoogleMapsRoutes";
 
 export default function Home() {
-  return <main className="">hello world</main>;
+  return (
+    <main className="h-screen w-full">
+      <GoogleMapsRoutes />
+    </main>
+  );
 }
