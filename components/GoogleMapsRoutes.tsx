@@ -93,7 +93,7 @@ export default function TravelItineraryPlanner() {
   const [places, setPlaces] = useState(initialAvailablePlaces);
   const [directions, setDirections] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
-  const autocompleteRef = useRef(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -144,7 +144,7 @@ export default function TravelItineraryPlanner() {
       const place = autocompleteRef.current.getPlace();
       if (place.geometry && place.geometry.location) {
         const newPlace: TravelItem = {
-          id: `place${places.length + 1}`,
+          id: place.place_id || "",
           title: place.name,
           date: "TBD",
           description: place.formatted_address || "",
