@@ -9,6 +9,7 @@ import {
   DirectionsRenderer,
   Autocomplete,
 } from "@react-google-maps/api";
+import { useChat } from "ai/react";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -87,24 +88,16 @@ const getIcon = (iconName: string) => {
   }
 };
 
-interface Message {
-  text: string;
-  isUser: boolean;
-}
-
 export default function TravelItineraryPlanner() {
   const [travelItems, setTravelItems] = useState(initialTravelItems);
   const [places, setPlaces] = useState(initialAvailablePlaces);
   const [directions, setDirections] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      text: "Hello! I'm your travel assistant. How can I help you plan your trip to Tokyo?",
-      isUser: false,
-    },
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
+
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    api: "/api/chat",
+  });
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -200,23 +193,6 @@ export default function TravelItineraryPlanner() {
 
       setTravelItems(result.travelTimeline);
       setPlaces(result.availablePlaces);
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (inputMessage.trim() !== "") {
-      setMessages([...messages, { text: inputMessage, isUser: true }]);
-      setInputMessage("");
-      // Simulate bot response
-      setTimeout(() => {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: "That's a great idea! I've added it to your itinerary. Is there anything else you'd like to do in Tokyo?",
-            isUser: false,
-          },
-        ]);
-      }, 1000);
     }
   };
 
@@ -384,45 +360,46 @@ export default function TravelItineraryPlanner() {
               <div
                 key={index}
                 className={`flex ${
-                  message.isUser ? "justify-end" : "justify-start"
+                  message.role === "user" ? "justify-end" : "justify-start"
                 } mb-2`}
               >
                 <div
                   className={`max-w-[70%] p-2 rounded-lg ${
-                    message.isUser ? "bg-blue-500 text-white" : "bg-white"
+                    message.role === "user"
+                      ? "bg-blue-500 text-white"
+                      : "bg-white"
                   }`}
                 >
                   <div className="flex items-center mb-1">
-                    {message.isUser ? (
+                    {message.role === "user" ? (
                       <User className="w-4 h-4 mr-1" />
                     ) : (
                       <Bot className="w-4 h-4 mr-1" />
                     )}
                     <span className="text-xs font-semibold">
-                      {message.isUser ? "You" : "Assistant"}
+                      {message.role === "user" ? "You" : "Assistant"}
                     </span>
                   </div>
-                  <p className="text-sm">{message.text}</p>
+                  <p className="text-sm">{message.content}</p>
                 </div>
               </div>
             ))}
           </div>
-          <div className="flex">
+          <form onSubmit={handleSubmit} className="flex">
             <input
               type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              value={input}
+              onChange={handleInputChange}
               placeholder="Type your message..."
               className="flex-grow p-2 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
             />
             <button
-              onClick={handleSendMessage}
-              className="bg-blue-500 text-white p-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus: ring-2 focus:ring-blue-500"
+              type="submit"
+              className="bg-blue-500 text-white p-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Send className="w-5 h-5" />
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
