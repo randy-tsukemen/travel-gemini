@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plane, Train, Car, Ship, MapPin, Plus } from "lucide-react";
+import { Plane, Train, Car, Ship, MapPin, Send, User, Bot } from "lucide-react";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -10,7 +10,6 @@ import {
   Autocomplete,
 } from "@react-google-maps/api";
 
-// You need to replace this with your actual Google Maps API key
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 interface TravelItem {
@@ -29,7 +28,7 @@ const initialTravelItems: TravelItem[] = [
     date: "June 1, 2024",
     description: "Experience the famous Shibuya Crossing",
     icon: "mapPin",
-    location: { lat: 35.6595, lng: 139.7005 }, // Shibuya Crossing coordinates
+    location: { lat: 35.6595, lng: 139.7005 },
   },
   {
     id: "item2",
@@ -37,7 +36,7 @@ const initialTravelItems: TravelItem[] = [
     date: "June 2, 2024",
     description: "Visit the iconic Tokyo Tower",
     icon: "mapPin",
-    location: { lat: 35.6586, lng: 139.7454 }, // Tokyo Tower coordinates
+    location: { lat: 35.6586, lng: 139.7454 },
   },
 ];
 
@@ -48,7 +47,7 @@ const initialAvailablePlaces: TravelItem[] = [
     date: "TBD",
     description: "Visit the historic Asakusa district",
     icon: "mapPin",
-    location: { lat: 35.7148, lng: 139.7967 }, // Asakusa coordinates
+    location: { lat: 35.7148, lng: 139.7967 },
   },
   {
     id: "place2",
@@ -56,7 +55,7 @@ const initialAvailablePlaces: TravelItem[] = [
     date: "TBD",
     description: "Enjoy a stroll in Ueno Park",
     icon: "mapPin",
-    location: { lat: 35.717, lng: 139.7745 }, // Ueno Park coordinates
+    location: { lat: 35.717, lng: 139.7745 },
   },
   {
     id: "place3",
@@ -64,7 +63,7 @@ const initialAvailablePlaces: TravelItem[] = [
     date: "TBD",
     description: "Experience shopping in Ginza",
     icon: "mapPin",
-    location: { lat: 35.6717, lng: 139.764 }, // Ginza coordinates
+    location: { lat: 35.6717, lng: 139.764 },
   },
 ];
 
@@ -88,12 +87,24 @@ const getIcon = (iconName: string) => {
   }
 };
 
+interface Message {
+  text: string;
+  isUser: boolean;
+}
+
 export default function TravelItineraryPlanner() {
   const [travelItems, setTravelItems] = useState(initialTravelItems);
   const [places, setPlaces] = useState(initialAvailablePlaces);
   const [directions, setDirections] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      text: "Hello! I'm your travel assistant. How can I help you plan your trip to Tokyo?",
+      isUser: false,
+    },
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -192,25 +203,95 @@ export default function TravelItineraryPlanner() {
     }
   };
 
+  const handleSendMessage = () => {
+    if (inputMessage.trim() !== "") {
+      setMessages([...messages, { text: inputMessage, isUser: true }]);
+      setInputMessage("");
+      // Simulate bot response
+      setTimeout(() => {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            text: "That's a great idea! I've added it to your itinerary. Is there anything else you'd like to do in Tokyo?",
+            isUser: false,
+          },
+        ]);
+      }, 1000);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">My Travel Itinerary</h1>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex flex-col lg:flex-row gap-6">
-          <Droppable droppableId="travelTimeline">
-            {(provided) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="w-full lg:w-1/2 bg-gray-100 p-4 rounded-lg"
-              >
-                <h2 className="text-xl font-semibold mb-4">Travel Timeline</h2>
-                <div className="relative">
-                  <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-300"></div>
-                  {travelItems.map((item, index) => (
+      <div className="flex flex-col lg:flex-row gap-6">
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="w-full lg:w-1/4 flex flex-col gap-6">
+            <Droppable droppableId="travelTimeline">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="bg-gray-100 p-4 rounded-lg"
+                >
+                  <h2 className="text-xl font-semibold mb-4">
+                    Travel Timeline
+                  </h2>
+                  <div className="relative">
+                    <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                    {travelItems.map((item, index) => (
+                      <Draggable
+                        key={item.id}
+                        draggableId={item.id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={getItemStyle(
+                              snapshot.isDragging,
+                              provided.draggableProps.style
+                            )}
+                            className="bg-white p-4 mb-4 rounded-lg shadow relative z-10"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="bg-gray-200 p-2 rounded-full">
+                                {getIcon(item.icon)}
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold">
+                                  {item.title}
+                                </h3>
+                                <p className="text-gray-600">{item.date}</p>
+                                <p className="text-sm text-gray-500 mt-2">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                  </div>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+            <Droppable droppableId="availablePlaces">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="bg-gray-100 p-4 rounded-lg"
+                >
+                  <h2 className="text-xl font-semibold mb-4">
+                    Available Places
+                  </h2>
+                  {places.map((place, index) => (
                     <Draggable
-                      key={item.id}
-                      draggableId={item.id}
+                      key={place.id}
+                      draggableId={place.id}
                       index={index}
                     >
                       {(provided, snapshot) => (
@@ -222,19 +303,18 @@ export default function TravelItineraryPlanner() {
                             snapshot.isDragging,
                             provided.draggableProps.style
                           )}
-                          className="bg-white p-4 mb-4 rounded-lg shadow relative z-10"
+                          className="bg-white p-4 mb-4 rounded-lg shadow"
                         >
                           <div className="flex items-center gap-4">
                             <div className="bg-gray-200 p-2 rounded-full">
-                              {getIcon(item.icon)}
+                              {getIcon(place.icon)}
                             </div>
                             <div>
                               <h3 className="text-lg font-semibold">
-                                {item.title}
+                                {place.title}
                               </h3>
-                              <p className="text-gray-600">{item.date}</p>
                               <p className="text-sm text-gray-500 mt-2">
-                                {item.description}
+                                {place.description}
                               </p>
                             </div>
                           </div>
@@ -242,108 +322,109 @@ export default function TravelItineraryPlanner() {
                       )}
                     </Draggable>
                   ))}
+                  {provided.placeholder}
                 </div>
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-          <Droppable droppableId="availablePlaces">
-            {(provided) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="w-full lg:w-1/4 bg-gray-100 p-4 rounded-lg"
+              )}
+            </Droppable>
+          </div>
+        </DragDropContext>
+        <div className="w-full lg:w-1/2 h-[600px] flex flex-col">
+          {isLoaded ? (
+            <>
+              <Autocomplete
+                onLoad={(autocomplete) => {
+                  autocompleteRef.current = autocomplete;
+                }}
+                onPlaceChanged={onPlaceChanged}
               >
-                <h2 className="text-xl font-semibold mb-4">Available Places</h2>
-                {places.map((place, index) => (
-                  <Draggable
-                    key={place.id}
-                    draggableId={place.id}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        style={getItemStyle(
-                          snapshot.isDragging,
-                          provided.draggableProps.style
-                        )}
-                        className="bg-white p-4 mb-4 rounded-lg shadow"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="bg-gray-200 p-2 rounded-full">
-                            {getIcon(place.icon)}
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold">
-                              {place.title}
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-2">
-                              {place.description}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-          <div className="w-full lg:w-1/4 h-[600px] flex flex-col">
-            {isLoaded ? (
-              <>
-                <Autocomplete
-                  onLoad={(autocomplete) => {
-                    autocompleteRef.current = autocomplete;
-                  }}
-                  onPlaceChanged={onPlaceChanged}
-                >
-                  <input
-                    type="text"
-                    placeholder="Search for a place"
-                    className="w-full p-2 mb-4 border border-gray-300 rounded"
+                <input
+                  type="text"
+                  placeholder="Search for a place"
+                  className="w-full p-2 mb-4 border border-gray-300 rounded"
+                />
+              </Autocomplete>
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={travelItems[0].location}
+                zoom={12}
+                onLoad={onLoad}
+              >
+                {directions && (
+                  <DirectionsRenderer
+                    directions={directions}
+                    options={{
+                      polylineOptions: {
+                        strokeColor: "#FF0000",
+                        strokeOpacity: 0.8,
+                        strokeWeight: 3,
+                      },
+                      markerOptions: {
+                        icon: {
+                          path: window.google.maps.SymbolPath.CIRCLE,
+                          scale: 7,
+                          fillColor: "#FF0000",
+                          fillOpacity: 1,
+                          strokeWeight: 2,
+                          strokeColor: "#FFFFFF",
+                        },
+                      },
+                    }}
                   />
-                </Autocomplete>
-                <GoogleMap
-                  mapContainerStyle={{ width: "100%", height: "100%" }}
-                  center={travelItems[0].location} // This will now be Shibuya Crossing
-                  zoom={12}
-                  onLoad={onLoad}
+                )}
+              </GoogleMap>
+            </>
+          ) : (
+            <div>Loading...</div>
+          )}
+        </div>
+        <div className="w-full lg:w-1/4 bg-gray-100 rounded-lg p-4 flex flex-col h-[600px]">
+          <h2 className="text-xl font-semibold mb-4">Travel Assistant</h2>
+          <div className="flex-grow overflow-y-auto mb-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${
+                  message.isUser ? "justify-end" : "justify-start"
+                } mb-2`}
+              >
+                <div
+                  className={`max-w-[70%] p-2 rounded-lg ${
+                    message.isUser ? "bg-blue-500 text-white" : "bg-white"
+                  }`}
                 >
-                  {directions && (
-                    <DirectionsRenderer
-                      directions={directions}
-                      options={{
-                        polylineOptions: {
-                          strokeColor: "#FF0000",
-                          strokeOpacity: 0.8,
-                          strokeWeight: 3,
-                        },
-                        markerOptions: {
-                          icon: {
-                            path: window.google.maps.SymbolPath.CIRCLE,
-                            scale: 7,
-                            fillColor: "#FF0000",
-                            fillOpacity: 1,
-                            strokeWeight: 2,
-                            strokeColor: "#FFFFFF",
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                </GoogleMap>
-              </>
-            ) : (
-              <div>Loading...</div>
-            )}
+                  <div className="flex items-center mb-1">
+                    {message.isUser ? (
+                      <User className="w-4 h-4 mr-1" />
+                    ) : (
+                      <Bot className="w-4 h-4 mr-1" />
+                    )}
+                    <span className="text-xs font-semibold">
+                      {message.isUser ? "You" : "Assistant"}
+                    </span>
+                  </div>
+                  <p className="text-sm">{message.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-grow p-2 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            />
+            <button
+              onClick={handleSendMessage}
+              className="bg-blue-500 text-white p-2 rounded-r-lg hover:bg-blue-600 focus:outline-none focus: ring-2 focus:ring-blue-500"
+            >
+              <Send className="w-5 h-5" />
+            </button>
           </div>
         </div>
-      </DragDropContext>
+      </div>
     </div>
   );
 }
