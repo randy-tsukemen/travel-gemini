@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const result = await streamText({
     model: groq("llama-3.1-70b-versatile"),
     system:
-      "You are a helpful travel assistant for Tokyo, Japan. Provide recommendations and answer questions about attractions, transportation, and local customs.",
+      "あなたは東京、日本のための頼りになる旅行アシスタントです。観光スポット、交通機関、そして地元の習慣に関するおすすめや質問にお答えします。できるだけ日本語を使用してください。",
     messages: convertToCoreMessages(messages),
   });
 
