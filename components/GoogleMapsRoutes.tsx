@@ -158,7 +158,7 @@ export default function TravelItineraryPlanner() {
             lng: place.geometry.location.lng(),
           },
         };
-        setPlaces([...places, newPlace]);
+        setPlaces([newPlace, ...places]);
         setSearchResult(null);
       }
     }
