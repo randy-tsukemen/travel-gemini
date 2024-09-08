@@ -3,11 +3,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Send } from "lucide-react";
-import { ChatClient } from "dify-client";
-import RecommendedPlace from "./RecommendedPlace";
-import { API_KEY, API_URL } from "@/config";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import RecommendedPlace from "./RecommendedPlace";
+import { API_KEY, API_URL } from "@/config";
+import Toast from "@/app/toast";
 
 interface Message {
   text: string;
@@ -19,74 +19,121 @@ interface ChatBoxProps {
   onPlaceSelect: (place: string) => void;
 }
 
-const client = new ChatClient(API_KEY, API_URL);
-
 export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
     {
       text: "こんにちは！旅行の計画をお手伝いします。どんな場所に行きたいですか？",
       sender: "bot",
+      isComplete: true,
     },
   ]);
   const [input, setInput] = useState("");
+  const [isResponseComplete, setIsResponseComplete] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const TypingIndicator = () => (
+    <div className="flex space-x-1 mt-2">
+      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
+      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></div>
+    </div>
+  );
+
   const handleSend = async () => {
     if (input.trim()) {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: input, sender: "user" },
-      ]);
+      const userMessage = { text: input, sender: "user" };
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
       setInput("");
+      setIsResponseComplete(false);
 
       try {
-        const response = await client.createChatMessage(
-          {}, // inputs (empty object as we don't have any specific inputs)
-          input, // query
-          "user", // user identifier (you might want to replace this with an actual user ID)
-          false, // stream (set to false for blocking response)
-          null, // conversation_id (null for a new conversation)
-          null // files (null as we're not sending any files)
-        );
+        const response = await fetch(`${API_URL}/chat-messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inputs: {},
+            query: input,
+            response_mode: "streaming",
+            conversation_id: "", // You might want to store and pass the conversation_id for continued conversations
+            user: "user", // Replace with actual user identifier
+          }),
+        });
 
-        const botResponse = getBotResponse(response.data.answer);
-        setMessages((prevMessages) => [...prevMessages, botResponse]);
+        if (response.ok) {
+          const reader = response.body?.getReader();
+          const decoder = new TextDecoder();
+          let fullBotResponse = "";
+          let displayedWords = 0;
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { text: "", sender: "bot", isComplete: false },
+          ]);
+
+          const updateBotMessage = async (
+            newText: string,
+            isComplete: boolean
+          ) => {
+            const newWords = newText.split(" ");
+            for (let i = displayedWords; i < newWords.length; i++) {
+              displayedWords++;
+              setMessages((prevMessages) => {
+                const newMessages = [...prevMessages];
+                newMessages[newMessages.length - 1] = {
+                  text: newWords.slice(0, displayedWords).join(" "),
+                  sender: "bot",
+                  isComplete: isComplete,
+                };
+                return newMessages;
+              });
+              await new Promise((resolve) => setTimeout(resolve, 80)); // 0.08 second delay
+            }
+          };
+
+          while (true) {
+            const { done, value } = await reader?.read();
+            if (done) {
+              await updateBotMessage(fullBotResponse, true);
+              setIsResponseComplete(true);
+              break;
+            }
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                const jsonData = JSON.parse(line.slice(6));
+                if (jsonData.event === "message") {
+                  const newContent = jsonData.answer;
+                  fullBotResponse += newContent;
+                  await updateBotMessage(fullBotResponse, false);
+                } else if (jsonData.event === "message_end") {
+                  await updateBotMessage(fullBotResponse, true);
+                  setIsResponseComplete(true);
+                }
+              }
+            }
+          }
+        } else {
+          throw new Error("Failed to fetch response");
+        }
       } catch (error) {
         console.error("Error sending message:", error);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            text: "エラーが発生しました。もう一度お試しください。",
-            sender: "bot",
-          },
-        ]);
+        Toast.notify({
+          type: "error",
+          message: "エラーが発生しました。もう一度お試しください。",
+        });
+        setIsResponseComplete(true);
       }
     }
-  };
-
-  const getBotResponse = (answer: string): Message => {
-    const lowerAnswer = answer.toLowerCase();
-    let recommendations: string[] | undefined;
-
-    if (lowerAnswer.includes("観光")) {
-      recommendations = ["東京タワー", "浅草寺", "上野公園"];
-    } else if (
-      lowerAnswer.includes("食事") ||
-      lowerAnswer.includes("レストラン")
-    ) {
-      recommendations = ["寿司 銀座", "ラーメン 一蘭", "天ぷら 天喜"];
-    }
-
-    return {
-      text: answer,
-      sender: "bot",
-      recommendations,
-    };
   };
 
   const customComponents = {
@@ -124,6 +171,9 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
               >
                 {message.text}
               </ReactMarkdown>
+              {message.sender === "bot" && !message.isComplete && (
+                <TypingIndicator />
+              )}
               {message.recommendations && (
                 <div className="mt-2 space-y-2">
                   {message.recommendations.map((place, placeIndex) => (
@@ -149,10 +199,12 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             placeholder="メッセージを入力..."
             className="flex-grow p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={!isResponseComplete}
           />
           <button
             onClick={handleSend}
-            className="p-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
+            disabled={!isResponseComplete}
           >
             <Send size={20} />
           </button>
