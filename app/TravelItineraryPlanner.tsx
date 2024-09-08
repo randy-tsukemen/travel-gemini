@@ -56,29 +56,39 @@ export default function TravelItineraryPlanner() {
         onLoad={() => setIsGoogleMapsLoaded(true)}
       />
       <h1 className="text-4xl font-bold mb-8 text-center">私の旅行プラン</h1>
-      <div className="flex flex-col lg:flex-row gap-8 mb-8">
-        <div className="w-full lg:w-1/2 bg-gray-100 rounded-lg shadow-md overflow-hidden">
-          <ChatBox />
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Chat section on the left */}
+        <div className="w-full lg:w-1/3">
+          <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden h-[calc(100vh-150px)]">
+            <ChatBox />
+          </div>
         </div>
-        <div className="w-full lg:w-1/2 h-[600px] bg-gray-100 rounded-lg shadow-md overflow-hidden">
-          {isGoogleMapsLoaded && (
-            <GoogleMapComponent
-              travelItems={travelItems}
-              setPlaces={setPlaces}
-            />
-          )}
+
+        {/* Map and Timeline/Available Places on the right */}
+        <div className="w-full lg:w-2/3 space-y-8">
+          {/* Map at the top right */}
+          <div className="h-[400px] bg-gray-100 rounded-lg shadow-md overflow-hidden">
+            {isGoogleMapsLoaded && (
+              <GoogleMapComponent
+                travelItems={travelItems}
+                setPlaces={setPlaces}
+              />
+            )}
+          </div>
+
+          {/* Timeline and Available Places below the map */}
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden h-[300px]">
+                <TravelTimeline travelItems={travelItems} />
+              </div>
+              <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden h-[300px]">
+                <AvailablePlaces places={places} />
+              </div>
+            </div>
+          </DragDropContext>
         </div>
       </div>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="w-full lg:w-1/2 bg-gray-100 rounded-lg shadow-md overflow-hidden">
-            <TravelTimeline travelItems={travelItems} />
-          </div>
-          <div className="w-full lg:w-1/2 bg-gray-100 rounded-lg shadow-md overflow-hidden">
-            <AvailablePlaces places={places} />
-          </div>
-        </div>
-      </DragDropContext>
     </div>
   );
 }
