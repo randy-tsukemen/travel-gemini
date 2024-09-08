@@ -9,6 +9,7 @@ import AvailablePlaces from "./AvailablePlaces";
 import { initialTravelItems, initialAvailablePlaces } from "./types";
 import { reorder, move } from "./utils";
 import Script from "next/script";
+import Toast from "@/app/toast";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -76,7 +77,7 @@ export default function TravelItineraryPlanner() {
           <div className="h-3/5 bg-white rounded-lg shadow-md overflow-hidden">
             {isGoogleMapsLoaded && (
               <GoogleMapComponent
-                travelItems={travelItems}
+                travelItems={travelItems.filter((item) => item.location)}
                 setPlaces={setPlaces}
               />
             )}
@@ -105,6 +106,7 @@ export default function TravelItineraryPlanner() {
           </DragDropContext>
         </div>
       </div>
+      <Toast />
     </div>
   );
 }

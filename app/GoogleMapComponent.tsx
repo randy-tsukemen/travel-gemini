@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TravelItem } from "./types";
 import { MapPin, Search } from "lucide-react";
 import { debounce } from "lodash";
+import Toast from "@/app/toast";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -89,21 +90,22 @@ export default function GoogleMapComponent({
     map: google.maps.Map,
     directionsRenderer: google.maps.DirectionsRenderer
   ) => {
-    if (travelItems.length < 2) return;
+    const validTravelItems = travelItems.filter((item) => item.location);
+    if (validTravelItems.length < 2) return;
 
     const directionsService = new google.maps.DirectionsService();
 
-    const origin = travelItems[0].location;
-    const destination = travelItems[travelItems.length - 1].location;
-    const waypoints = travelItems.slice(1, -1).map((item) => ({
-      location: item.location,
+    const origin = validTravelItems[0].location;
+    const destination = validTravelItems[validTravelItems.length - 1].location;
+    const waypoints = validTravelItems.slice(1, -1).map((item) => ({
+      location: new google.maps.LatLng(item.location.lat, item.location.lng),
       stopover: true,
     }));
 
     directionsService.route(
       {
-        origin: origin,
-        destination: destination,
+        origin: new google.maps.LatLng(origin.lat, origin.lng),
+        destination: new google.maps.LatLng(destination.lat, destination.lng),
         waypoints: waypoints,
         travelMode: google.maps.TravelMode.DRIVING,
       },
@@ -158,7 +160,7 @@ export default function GoogleMapComponent({
       placesService.getDetails(
         {
           placeId: placeId,
-          fields: ["name", "geometry", "formatted_address"],
+          fields: ["name", "formatted_address", "geometry"],
         },
         (place, status) => {
           if (
@@ -178,23 +180,18 @@ export default function GoogleMapComponent({
                 lng: place.geometry.location.lng(),
               },
             };
-            setPlaces((prevPlaces) => [...prevPlaces, newPlace]);
-
-            if (map) {
-              new google.maps.Marker({
-                map: map,
-                position: place.geometry.location,
-                title: place.name,
-              });
-
-              map.setCenter(place.geometry.location);
-              map.setZoom(15);
-            }
+            setPlaces((prevPlaces) => [newPlace, ...prevPlaces]);
 
             setSearchInput("");
             setSuggestions([]);
             sessionTokenRef.current =
               new google.maps.places.AutocompleteSessionToken();
+
+            // Show a popup to inform the user
+            Toast.notify({
+              type: "success",
+              message: `${newPlace.title} が利用可能な場所に追加されました。`,
+            });
           }
         }
       );
