@@ -1,6 +1,6 @@
 import React from "react";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
-import { Plane, Train, Car, Ship, MapPin } from "lucide-react";
+import { Plane, Train, Car, Ship, MapPin, Info } from "lucide-react";
 import { TravelItem } from "./types";
 import { getItemStyle } from "./utils";
 
@@ -30,7 +30,7 @@ export default function AvailablePlaces({ places }: AvailablePlacesProps) {
         <div
           ref={provided.innerRef}
           {...provided.droppableProps}
-          className="bg-gray-100 p-4"
+          className="bg-[#fcefee] p-4"
         >
           {places.map((place, index) => (
             <Draggable key={place.id} draggableId={place.id} index={index}>
@@ -43,15 +43,18 @@ export default function AvailablePlaces({ places }: AvailablePlacesProps) {
                     snapshot.isDragging,
                     provided.draggableProps.style
                   )}
-                  className="bg-white p-4 mb-4 rounded-lg shadow"
+                  className="bg-white p-4 mb-4 rounded-lg shadow-md border-l-4 border-[#d85a6e]"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-gray-200 p-2 rounded-full">
+                    <div className="bg-[#fcd5d5] p-2 rounded-full text-[#d85a6e]">
                       {getIcon(place.icon)}
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold">{place.title}</h3>
-                      <p className="text-sm text-gray-500 mt-2">
+                      <h3 className="text-lg font-semibold text-[#d85a6e]">
+                        {place.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-2 flex items-center">
+                        <Info className="w-4 h-4 mr-1 text-[#d85a6e]" />
                         {place.description}
                       </p>
                     </div>

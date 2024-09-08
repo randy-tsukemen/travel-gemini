@@ -50,32 +50,30 @@ export default function TravelItineraryPlanner() {
   };
 
   const handlePlaceSelect = (place: any) => {
-    // Implement the logic for handling place selection
-    // This might involve updating the places or travelItems state
     console.log("Selected place:", place);
   };
 
   return (
-    <div className="container mx-auto p-4 bg-white min-h-screen">
+    <div className="flex flex-col h-screen bg-[#fcefee] p-4">
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,marker&v=beta`}
         onLoad={() => setIsGoogleMapsLoaded(true)}
       />
-      <h1 className="text-4xl font-bold mb-8 text-center">私の旅行プラン</h1>
-      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-150px)]">
+      <h1 className="text-3xl font-bold mb-6 text-center text-[#d85a6e]">
+        私の旅行プラン
+      </h1>
+      <div className="flex flex-1 gap-6 overflow-hidden">
         {/* Chat section on the left */}
-        <div className="w-full lg:w-1/3 h-full">
-          <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden h-full">
-            <div className="h-full overflow-y-auto">
-              <ChatBox onPlaceSelect={handlePlaceSelect} />
-            </div>
+        <div className="w-1/3 h-full">
+          <div className="h-full rounded-lg shadow-md overflow-hidden">
+            <ChatBox onPlaceSelect={handlePlaceSelect} />
           </div>
         </div>
 
         {/* Map and Timeline/Available Places on the right */}
-        <div className="w-full lg:w-2/3 h-full flex flex-col">
+        <div className="w-2/3 h-full flex flex-col gap-6">
           {/* Map at the top right */}
-          <div className="h-[60%] bg-gray-100 rounded-lg shadow-md overflow-hidden mb-8">
+          <div className="h-3/5 bg-white rounded-lg shadow-md overflow-hidden">
             {isGoogleMapsLoaded && (
               <GoogleMapComponent
                 travelItems={travelItems}
@@ -86,17 +84,17 @@ export default function TravelItineraryPlanner() {
 
           {/* Timeline and Available Places below the map */}
           <DragDropContext onDragEnd={onDragEnd}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[calc(40%-2rem)]">
-              <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden flex flex-col">
-                <h2 className="text-xl font-semibold p-4 bg-white">
+            <div className="flex h-2/5 gap-6">
+              <div className="w-1/2 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                <h2 className="text-xl font-semibold p-3 bg-[#d85a6e] text-white">
                   旅行タイムライン
                 </h2>
                 <div className="flex-grow overflow-y-auto">
                   <TravelTimeline travelItems={travelItems} />
                 </div>
               </div>
-              <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden flex flex-col">
-                <h2 className="text-xl font-semibold p-4 bg-white">
+              <div className="w-1/2 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                <h2 className="text-xl font-semibold p-3 bg-[#d85a6e] text-white">
                   利用可能な場所
                 </h2>
                 <div className="flex-grow overflow-y-auto">

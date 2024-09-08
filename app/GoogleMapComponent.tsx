@@ -203,24 +203,24 @@ export default function GoogleMapComponent({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 bg-white border-b border-gray-200">
+      <div className="p-4 bg-[#fcefee] border-b border-[#d85a6e]">
         <div className="relative">
           <input
             type="text"
             value={searchInput}
             onChange={handleInputChange}
             placeholder="場所を検索"
-            className="w-full p-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 pr-10 border border-[#d85a6e] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d85a6e] bg-white"
           />
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#d85a6e]" />
         </div>
         {suggestions.length > 0 && (
-          <ul className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <ul className="mt-2 bg-white border border-[#d85a6e] rounded-lg shadow-lg max-h-60 overflow-y-auto">
             {suggestions.map((suggestion) => (
               <li
                 key={suggestion.place_id}
                 onClick={() => handleSuggestionClick(suggestion.place_id)}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
+                className="p-2 hover:bg-[#fcefee] cursor-pointer"
               >
                 {suggestion.description}
               </li>

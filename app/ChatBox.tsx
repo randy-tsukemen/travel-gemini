@@ -13,11 +13,20 @@ interface Message {
   text: string;
   sender: "user" | "bot";
   recommendations?: string[];
+  isComplete?: boolean;
 }
 
 interface ChatBoxProps {
   onPlaceSelect: (place: string) => void;
 }
+
+const TypingIndicator = () => (
+  <div className="flex space-x-1 mt-2">
+    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
+    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></div>
+  </div>
+);
 
 export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
   const { t } = useTranslation();
@@ -35,14 +44,6 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  const TypingIndicator = () => (
-    <div className="flex space-x-1 mt-2">
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
-      <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></div>
-    </div>
-  );
 
   const handleSend = async () => {
     if (input.trim()) {
@@ -149,7 +150,7 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#fcefee]">
       <div className="flex-grow overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
           <div
@@ -161,8 +162,8 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
             <div
               className={`max-w-3/4 p-3 rounded-lg ${
                 message.sender === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-800"
+                  ? "bg-[#d85a6e] text-white"
+                  : "bg-white text-gray-800"
               }`}
             >
               <ReactMarkdown
@@ -190,7 +191,7 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-[#d85a6e]">
         <div className="flex items-center">
           <input
             type="text"
@@ -198,12 +199,12 @@ export default function ChatBox({ onPlaceSelect }: ChatBoxProps) {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             placeholder="メッセージを入力..."
-            className="flex-grow p-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-grow p-2 border border-[#d85a6e] rounded-l-lg focus:outline-none focus:ring-2 focus:ring-[#d85a6e]"
             disabled={!isResponseComplete}
           />
           <button
             onClick={handleSend}
-            className="p-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
+            className="p-2 bg-[#d85a6e] text-white rounded-r-lg hover:bg-[#c04d5f] focus:outline-none focus:ring-2 focus:ring-[#d85a6e] disabled:bg-gray-400"
             disabled={!isResponseComplete}
           >
             <Send size={20} />
